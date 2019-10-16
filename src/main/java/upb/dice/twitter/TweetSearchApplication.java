@@ -87,7 +87,7 @@ public class TweetSearchApplication {
 //       query.until("2019-02-31").since("2019-02-01");   //Specific time period
         long key_id_1 = locationParse(new GeoLocation(latitude, longitude));
         if (key_id_1 != 1) {
-            query.setSinceId(key_id_1);
+            query.sinceId(key_id_1);
         }
         getTweet(query);
     }
