@@ -2,9 +2,13 @@ package upb.dice.twitter;
 
 import org.apache.commons.cli.*;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * An application which extracts tweets based on a specific keyword or location provided by the user
+ */
 public class TweetSearchApplication {
 
     public static void main(String args[]) {
@@ -21,20 +25,13 @@ public class TweetSearchApplication {
 
                 //create available options
                 Option option1 = Option.builder("k").hasArg(true).numberOfArgs(1).desc("Keyword Based Search").longOpt("key").argName("Keyword").build();
-
                 Option option2 = Option.builder("l").longOpt("loc").hasArg(true).numberOfArgs(3).desc("Location Based Search").argName("Latitude><Longitude><Radius In Kilometers").valueSeparator(' ').build();
-
                 Option option3 = Option.builder("h").longOpt("Help").hasArg(false).desc("Help Menu").build();
 
                 //prepare the options
                 Options options = new Options();
-                options.addOption(option1).
+                options.addOption(option1).addOption(option2).addOption(option3);
 
-                        addOption(option2).
-
-                        addOption(option3);
-
-                //take in the arguments
                 CommandLine cmd = null;
                 try {
                     cmd = parser.parse(options, args);
@@ -42,11 +39,12 @@ public class TweetSearchApplication {
                     e.printStackTrace();
                 }
 
-
                 //if there is a value for keybased, get it
                 assert cmd != null;
                 if (cmd.hasOption("k")) {
-                    String key = cmd.getOptionValue("k");
+                    String[] searchArgs = cmd.getOptionValues("k");
+
+                    String key = searchArgs[0];
                     try {
                         searchTweets.keywordQuery(key);
                     } catch (IOException e) {
@@ -71,7 +69,7 @@ public class TweetSearchApplication {
                 }
                 System.out.println("Running: " + new java.util.Date());
             }
-        }, 0, (long) 2.88e+7); //Run after every 8 hours
+        }, 0, (long) 1.44e+7); //Run after every 4 hours
 
     }
 }

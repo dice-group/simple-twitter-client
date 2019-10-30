@@ -11,28 +11,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class MaxIDCheck {
-    long keyParse(String key) throws IOException {
+/**
+ * Retrieves the maxID for a specific query
+ */
+public class MaxIDCheck {
+    /**
+     * This method checks for the maxID for the given keyword, Returns 1 if keyword is new
+     * @param key to check the respective maxID
+     * @return the maxID for the given key
+     */
+    public long keyParse(String key) throws IOException {
         Map<String, String> map = new HashMap<>();
-
         try (BufferedReader br = new BufferedReader(new FileReader("Keyword_MaxID1.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] splitString = line.split(",");
                 map.put(splitString[0], splitString[1]);
-
             }
-
             if (map.containsKey(key)) {
                 String id_string = map.get(key);
-                System.out.println("key and max are"+key+id_string);
-                return (new BigDecimal(id_string).intValue());
+                return new BigDecimal(id_string).intValue();
+            }
+            else {
+                return 1L;
             }
         }
-        return 1L;
     }
 
-    long locationParse(GeoLocation geoLocation) throws IOException {
+    /**
+     * This method checks for the maxID for the current geoLocation. Returns 1 if geoLocation is new
+     * @param geoLocation for which the maxID has to be checked
+     * @return the maxID for the respective geoLocation
+     */
+    public long locationParse(GeoLocation geoLocation) throws IOException {
         Map<List<String>, String> pairStringMap = new HashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader("Latitude_Longitude_MaxID1.txt"))) {
             String line;
