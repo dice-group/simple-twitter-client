@@ -17,6 +17,7 @@ public class TweetExplorer {
 
     /**
      * This method builds a query based on the keyword and extracts the tweets containing this keyword
+     *
      * @param key for which the query is built and the tweets containing this key are searched and extracted
      */
     public void keywordQuery(String key) throws IOException, TwitterException, InterruptedException {
@@ -30,9 +31,10 @@ public class TweetExplorer {
 
     /**
      * This method builds the query based on the location provided and extracts the tweets from the respective location
-     * @param latitude of the location
+     *
+     * @param latitude  of the location
      * @param longitude of the location
-     * @param radius coverage from the location point
+     * @param radius    coverage from the location point
      */
     public void locationQuery(double latitude, double longitude, double radius) throws IOException, TwitterException, InterruptedException {
         GeoQuery geoQuery = new GeoQuery(new GeoLocation(latitude, longitude));
@@ -44,5 +46,4 @@ public class TweetExplorer {
         }
         tweetExtractor.getTweet(query);
     }
-
 }

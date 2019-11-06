@@ -26,10 +26,10 @@ public class StoreMaxID {
      * @param maxID the maxID retrieved from the current search
      * @param query the query containing the keyword
      */
-    public void keywordBasedMaxID(double maxID, Query query) throws IOException{
-         try (BufferedWriter out = new BufferedWriter(new FileWriter("Keyword_MaxID.txt", true))) {
-                out.append(query.getQuery()).append(",").append(String.valueOf(maxID));
-                out.append('\n');
-            }
+    public void keywordBasedMaxID(double maxID, Query query) throws IOException {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter("Keyword_MaxID.txt", true))) {
+            out.append(query.getQuery()).append(",").append(String.valueOf(maxID));
+            out.append('\n');
         }
+    }
 }
