@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Retrieves the maxID for a specific query
+ * Retrieves the maxID for a specific query from a file storing the maxID from the previous
+ * search results. The file contains the keyword/location with the respective maxID obtained
+ * at that instant of search
  */
-public class MaxIDCheck {
+public class MaxIDChecker {
     /**
      * This method checks for the maxID for the given keyword, Returns 1 if keyword is new
      * @param key to check the respective maxID
