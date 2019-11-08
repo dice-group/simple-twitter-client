@@ -1,156 +1,88 @@
 package upb.dice.twitter;
 
-import twitter4j.*;
-import twitter4j.conf.ConfigurationBuilder;
+import org.apache.commons.cli.*;
+import twitter4j.TwitterException;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
+/**
+ * An application which extracts tweets based on a specific keyword or location provided by the user.
+ * 1) If keyword based: The keyword has to be mentioned along with the time of periodic execution (in hours) is provided
+ * 2) If location based: The latitude, longitude and the radius along with the time of periodic execution (in hours) is provided
+ */
 public class TweetSearchApplication {
-    private double lat;
-    private double lon;
-    private Twitter twitter;
 
-    //Authentication
-    private TweetSearchApplication() {
+    private static String key = null;
+    private static double latitude, longitude, radius = -1;
 
-        ConfigurationBuilder configBuilder = new ConfigurationBuilder();
-        configBuilder.setDebugEnabled(true)
-                .setOAuthConsumerKey("iCv6sCoYcQtM3EgxbPrz3zj8p")
-                .setOAuthConsumerSecret("RXkay6HURXFPRJPA60Z3ZBHk775qIf6aSHjPCErAVSUkTXBGg8")
-                .setOAuthAccessToken("1174976100880896000-2XLLvld7N051jWYUpHcJdvgNWTEng1")
-                .setOAuthAccessTokenSecret("ZloZQ4u0r3ddyts5lGzq28QlO5GRoUq3hUoSFYwsB43j8")
-        ;
-        twitter = new TwitterFactory(configBuilder.build()).getInstance();
+    public static void main(String[] args) {
+        final long[] checkPeriod = {60 * 60 * 1000};
 
-    }
+        //initialize the parser
+        CommandLineParser parser = new DefaultParser();
 
-    //Check if the given keyword tweets are already extracted, if not keep track of the new maxID
-    private long keyParse(String key) throws IOException {
-        Map<String, String> map = new HashMap<>();
+        //create available options
+        Option option1 = Option.builder("k").hasArg(true).numberOfArgs(2).desc("Keyword Based Search").longOpt("key").argName("Keyword><Check period (In hours)").build();
+        Option option2 = Option.builder("l").longOpt("loc").hasArg(true).numberOfArgs(4).desc("Location Based Search").argName("Latitude><Longitude><Radius In Kilometers><Check period (In hours)").valueSeparator(' ').build();
+        Option option3 = Option.builder("h").longOpt("Help").hasArg(false).desc("Help Menu").build();
 
-        try (BufferedReader br = new BufferedReader(new FileReader("Keyword_MaxID.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] splitString = line.split(":");
-                map.put(splitString[0], splitString[1]);
+        //prepare the options
+        Options options = new Options();
+        options.addOption(option1).addOption(option2).addOption(option3);
 
+        CommandLine cmd;
+        try {
+            cmd = parser.parse(options, args); //read in the options
+            //helper option
+            if (cmd != null && cmd.hasOption("h")) {
+                HelpFormatter formatter = new HelpFormatter();
+                formatter.printHelp("Command Line Helper", options);
             }
-            if (map.containsKey(key)) {
-                String id_string = map.get(key);
-                return Long.parseLong(id_string);
-            }
-        }
-        return 1L;
-    }
+            //either keyword or location based
+            else if ((cmd != null && cmd.hasOption("k")) || (cmd != null && cmd.hasOption("l"))) {
+                if (cmd.hasOption("k")) {
+                    String[] searchArgs = cmd.getOptionValues("k");
+                    key = searchArgs[0];
+                    long periodSeconds = Long.parseLong(searchArgs[1]);
+                    checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
+                } else if (cmd.hasOption("l")) {
+                    String[] searchArgs = cmd.getOptionValues("l");
+                    latitude = Double.parseDouble(searchArgs[0]);
+                    longitude = Double.parseDouble(searchArgs[1]);
+                    radius = Double.parseDouble(searchArgs[2]);
+                    long periodSeconds = Long.parseLong(searchArgs[3]);
+                    checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
+                }
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    TweetExplorer searchTweets = new TweetExplorer();
 
-    //Check if the given location tweets are already extracted, if not, keep track of the new maxID
-    private long locationParse(GeoLocation geoLocation) throws IOException {
-        Map<List<String>, String> pairStringMap = new HashMap<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("Latitude_Longitude_MaxID.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] splitString = line.split(":");
-                String latitude = splitString[0];
-                String longitude = splitString[1];
-                String locMaxId = splitString[2];
-                pairStringMap.put(Arrays.asList(latitude, longitude), locMaxId);
-            }
-            String lon_str = String.valueOf(geoLocation.getLatitude());
-            String lat_str = String.valueOf(geoLocation.getLatitude());
-            if (pairStringMap.containsKey(Arrays.asList(lon_str, lat_str))) {
-                String id_string = pairStringMap.get(Arrays.asList(lon_str, lat_str));
-                return Long.parseLong(id_string);
-            }
-            return 1L;
-        }
-    }
-
-
-    private void queryBuild(String key) throws TwitterException, IOException {
-        long key_id_1 = keyParse(key);
-        Query query1 = new Query(key);
-        if (key_id_1 != 1) {
-            query1.sinceId(key_id_1);
-        }
-        getTweet(query1);
-    }
-
-    //Location based Tweet Search
-    private void queryBuild(double latitude, double longitude, double radius) throws TwitterException, IOException {
-        GeoQuery geoQuery = new GeoQuery(new GeoLocation(latitude, longitude));
-        Query query = new Query();
-        query.setGeoCode(geoQuery.getLocation(), radius, Query.KILOMETERS);
-        lat = latitude;
-        lon = longitude;
-
-//       query.until("2019-02-31").since("2019-02-01");   //Specific time period
-        long key_id_1 = locationParse(new GeoLocation(latitude, longitude));
-        if (key_id_1 != 1) {
-            query.sinceId(key_id_1);
-        }
-        getTweet(query);
-    }
-
-
-    //Extract the tweets based on the query built
-    private void getTweet(Query query) throws TwitterException, IOException {
-        QueryResult queryResult;
-        System.out.println("Tweets search Start");
-        FileWriter writer = new FileWriter("Tweets.txt", true);
-        int counter = 0;
-        do {
-            queryResult = twitter.search(query);
-            List<Status> queryTweets = queryResult.getTweets();
-            long maxId;
-            if (counter == 0) {
-                maxId = queryResult.getMaxId();
-                //Location based
-                if (query.getQuery() == null) {
-                    try (BufferedWriter out = new BufferedWriter(new FileWriter("Latitude_Longitude_MaxID.txt", true))) {
-                        out.append(String.valueOf(lat)).append(":").append(String.valueOf(lon)).append(":").append(String.valueOf(maxId));
-                        out.append('\n');
+                    @Override
+                    public void run() {
+                        if (key != null) {
+                            try {
+                                searchTweets.keywordQuery(key);
+                            } catch (IOException | InterruptedException | TwitterException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (latitude != -1 && longitude != -1 && radius != -1) {
+                            try {
+                                searchTweets.locationQuery(latitude, longitude, radius);
+                            } catch (IOException | TwitterException | InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
-                }
-                //Keyword Based
-                else {
-                    String key = query.getQuery();
-                    try (BufferedWriter out = new BufferedWriter(new FileWriter("Keyword_MaxID.txt", true))) {
-                        out.append(key).append(":").append(String.valueOf(maxId));
-                        out.append('\n');
-                    }
-                }
+
+                }, 0, checkPeriod[0]);
+                System.out.println("Running at: " + new java.util.Date());
             }
-            counter += 1;
-            for (Status i : queryTweets) {
-                if (!i.isRetweet()) {
-                    writer.append(String.valueOf(i.getId())).append(":").append(i.getText()).append('\n');
-                }
-            }
-
+        } catch (ParseException e) {
+            System.out.println("Error in arguments. " + e.getMessage());
         }
-        while ((query = queryResult.nextQuery()) != null);
-        System.out.println("Tweets search End");
-    }
 
-
-    public static void main(String[] args) throws TwitterException, IOException {
-        //List of Keywords
-        ArrayList<String> keyWords = new ArrayList<>(Arrays.asList("Titan"));
-        TweetSearchApplication tweetSearch = new TweetSearchApplication();
-        double radius = 10;
-        double longitude = 13.379758;
-        double latitude = -8.7575;
-        System.out.println("1: Keyword Based Search. 2: Location Based Search");
-        Scanner in = new Scanner(System.in);
-        int s = in.nextInt();
-        switch (s) {
-            case 1:
-                for (String s1 : keyWords)
-                    tweetSearch.queryBuild(s1);
-
-            case 2:
-                tweetSearch.queryBuild(latitude, longitude, radius);
-        }
     }
 }
