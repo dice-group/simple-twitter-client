@@ -12,22 +12,21 @@ import java.util.Map;
  */
 public class RateLimitChecker {
     private Twitter twitter = TwitterFactory.getSingleton();
-    private boolean limitReached = false;
 
     /**
      * This method checks if the rate limit has been reached for the current search
      *
      * @return 1 if the rate limit has reached
      */
-    public boolean rateLimitCheck() throws TwitterException {
+    public boolean rateLimitCheck() throws TwitterException, InterruptedException {
         Map<String, RateLimitStatus> rateLimit = twitter.getRateLimitStatus();
         for (String status : rateLimit.keySet()) {
             RateLimitStatus timeLeft = rateLimit.get(status);
             if (timeLeft.getRemaining() == 0) {
                 System.out.println("Rate limit exceeded, will try after 15 minutes");
-                limitReached = true;
+                return true;
             }
         }
-        return limitReached;
+        return false;
     }
 }
