@@ -80,14 +80,14 @@ public class TweetSearchApplication {
                             Iterator iterator1, iterator2, iterator3;
 
                             //initialize a new queue by copying from the original queue
-                            LinkedList<String> currentLKey = new LinkedList<>(keywordQueue);
+                            LinkedList<String> currentKey = new LinkedList<>(keywordQueue);
                             LinkedList<Double> currentLat = new LinkedList<>(latitudeQeue);
                             LinkedList<Double> currentLon = new LinkedList<>(longitudeQeue);
                             LinkedList<Double> currentLRad = new LinkedList<>(radiusQeue);
 
 
                             //get iterators for the queue
-                            iterator = currentLKey.iterator();
+                            iterator = currentKey.iterator();
                             iterator1 = currentLat.iterator();
                             iterator2 = currentLon.iterator();
                             iterator3 = currentLRad.iterator();
@@ -98,13 +98,13 @@ public class TweetSearchApplication {
 
                                 //start keyword based search
                                 while (iterator.hasNext()) {
-                                    String keyCurrent = currentLKey.peek();
+                                    String keyCurrent = currentKey.peek();
                                     System.out.println("Current keyword is: " + keyCurrent);
 
                                     try {
 
                                         searchTweets.keywordQuery(keyCurrent); //Start the search
-                                        currentLKey.remove(); //Remove from the current queue
+                                        currentKey.remove(); //Remove from the current queue
                                     } catch (IOException | InterruptedException ex) {
                                         ex.printStackTrace();
                                     }
@@ -130,13 +130,13 @@ public class TweetSearchApplication {
                                 }
 
                                 //initialize new queue by copying values from the original queue
-                                currentLKey = new LinkedList<>(keywordQueue);
+                                currentKey = new LinkedList<>(keywordQueue);
                                 currentLat = new LinkedList<>(latitudeQeue);
                                 currentLon = new LinkedList<>(longitudeQeue);
                                 currentLRad = new LinkedList<>(radiusQeue);
 
                                 //get the iterator for the newly assigned queue
-                                iterator = currentLKey.iterator();
+                                iterator = currentKey.iterator();
                                 iterator1 = currentLat.iterator();
                                 iterator2 = currentLon.iterator();
                                 iterator3 = currentLRad.iterator();
