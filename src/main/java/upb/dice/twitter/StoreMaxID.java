@@ -17,7 +17,7 @@ public class StoreMaxID {
      * @param query the query containing the latitude and longitude
      */
     public void locationBasedMaxID(double maxID, Query query) throws IOException {
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(new File(directoryName + File.separator + "Latitude_Longitude_MaxID.txt"), true))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(new File("Tweets Search Details" + File.separator + "Latitude_Longitude_MaxID.txt"), true))) {
             out.append(String.valueOf(query.getGeocode())).append(",").append(String.valueOf(maxID));
             out.append('\n');
         }
@@ -27,7 +27,7 @@ public class StoreMaxID {
      * @param query the query containing the keyword
      */
     public void keywordBasedMaxID(double maxID, Query query) throws IOException {
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(new File(directoryName + File.separator + "Keyword_MaxID.txt"), true))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(new File("Tweets Search Details" + File.separator + "Keyword_MaxID.txt"), true))) {
             out.append(query.getQuery()).append(",").append(String.valueOf(maxID));
             out.append('\n');
         }

@@ -31,7 +31,8 @@ public class TweetExtractor {
             rateLimit = new RateLimitChecker().rateLimitCheck();
             System.out.println("Tweets search Start");
             String directoryName = "Tweets Search Details";
-            FileWriter writer = new FileWriter(new File(directoryName + File.separator + "Tweet object.txt"), true);
+            File file = new File("Tweets Search Details" + File.separator + "Tweet object.txt");
+            FileWriter writer = new FileWriter(file, true);
             int counter = 0;
             long sinceID = 0;
             long oldestTweetID;

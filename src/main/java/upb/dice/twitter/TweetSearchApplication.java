@@ -47,7 +47,6 @@ public class TweetSearchApplication {
                 formatter.printHelp("Command Line Helper", options);
             }
             //either keyword or location based
-
             else {
                 if (cmd != null && (cmd.hasOption("k") || cmd.hasOption("l"))) {
                     if (cmd.hasOption("k")) {

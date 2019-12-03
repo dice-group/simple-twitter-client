@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,13 +27,13 @@ public class MaxIDChecker {
      * @param key to check the respective maxID
      * @return the maxID for the given key
      */
-
-    String directoryName = "Tweets Search Details";
-
     public long keyParse(String key) throws IOException {
         long result;
         Map<String, String> map = new HashMap<>();
-        BufferedReader br = new BufferedReader(new FileReader( "Tweets Search Details" + File.separator +"Keyword_MaxID.txt"));
+        File file = new File("Tweets Search Details" + File.separator + "Keyword_MaxID.txt");
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        BufferedReader br = new BufferedReader(new FileReader("Tweets Search Details" + File.separator + "Keyword_MaxID.txt"));
         String line;
         while ((line = br.readLine()) != null) {
             String[] splitString = line.split(",");
@@ -39,13 +42,11 @@ public class MaxIDChecker {
         if (map.containsKey(key)) {
             String id_string = map.get(key);
             result = new BigDecimal(id_string).toBigInteger().longValue();
-        }
-        else {
+        } else {
             result = 1L;
         }
         return result;
     }
-
     /**
      * This method checks for the maxID for the current geoLocation. Returns 1 if geoLocation is new
      *
@@ -55,8 +56,11 @@ public class MaxIDChecker {
     public long locationParse(GeoLocation geoLocation) throws IOException {
         long result = 1L;
         Map<List<String>, String> pairStringMap = new HashMap<>();
+        File file = new File("Tweets Search Details" + File.separator + "Latitude_Longitude_MaxID.txt");
+        file.getParentFile().mkdir();
+        file.createNewFile();
         String line;
-        BufferedReader br = new BufferedReader(new FileReader( "Tweets Search Details" + File.separator +"Latitude_Longitude_MaxID.txt"));
+        BufferedReader br = new BufferedReader(new FileReader(file));
         while ((line = br.readLine()) != null) {
             String[] splitString = line.split(",");
             String latitude = splitString[0];
@@ -73,4 +77,5 @@ public class MaxIDChecker {
         return result;
     }
 }
+
 
