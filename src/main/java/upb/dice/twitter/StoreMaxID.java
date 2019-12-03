@@ -11,9 +11,7 @@ import java.io.IOException;
  * Stores the maxID with the respective keyword/location for a search result which is used as a base point for the next search
  */
 public class StoreMaxID {
-
     String directoryName = "Tweets Search Details";
-
     /**
      * @param maxID the maxID retrieved from the current search
      * @param query the query containing the latitude and longitude
@@ -24,7 +22,6 @@ public class StoreMaxID {
             out.append('\n');
         }
     }
-
     /**
      * @param maxID the maxID retrieved from the current search
      * @param query the query containing the keyword

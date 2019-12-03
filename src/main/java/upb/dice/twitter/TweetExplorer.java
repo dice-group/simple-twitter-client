@@ -13,11 +13,12 @@ public class TweetExplorer {
 
     private MaxIDChecker maxIDChecker = new MaxIDChecker();
     private TweetExtractor tweetExtractor = new TweetExtractor();
-        /**
+    /**
      * This method builds a query based on the keyword and extracts the tweets containing this keyword
      *
      * @param key for which the query is built and the tweets containing this key are searched and extracted
      */
+
     public void keywordQuery(String key) throws IOException, InterruptedException {
         long key_id_1 = maxIDChecker.keyParse(key);
         Query query1 = new Query(key);

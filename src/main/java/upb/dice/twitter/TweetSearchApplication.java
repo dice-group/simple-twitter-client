@@ -69,32 +69,30 @@ public class TweetSearchApplication {
                         }
                     }
 
-                    Timer timer1 = new Timer();
-                    timer1.schedule(new TimerTask() {
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
 
-                        TweetExplorer searchTweets = new TweetExplorer();
+                        TweetExplorer tweetExplorer  = new TweetExplorer();
 
                         @Override
                         public void run() {
-                            Iterator iterator;
-                            Iterator iterator1, iterator2, iterator3;
+                            Iterator iterator, iterator1, iterator2, iterator3;
 
                             //initialize a new queue by copying from the original queue
                             LinkedList<String> currentKey = new LinkedList<>(keywordQueue);
                             LinkedList<Double> currentLat = new LinkedList<>(latitudeQeue);
                             LinkedList<Double> currentLon = new LinkedList<>(longitudeQeue);
-                            LinkedList<Double> currentLRad = new LinkedList<>(radiusQeue);
+                            LinkedList<Double> currentRad = new LinkedList<>(radiusQeue);
 
 
                             //get iterators for the queue
                             iterator = currentKey.iterator();
                             iterator1 = currentLat.iterator();
                             iterator2 = currentLon.iterator();
-                            iterator3 = currentLRad.iterator();
+                            iterator3 = currentRad.iterator();
 
                             //runs forever with the queues being assigned inside the while loop
                             while ((iterator.hasNext()) || (iterator1.hasNext() && iterator2.hasNext() && iterator3.hasNext())) {
-
 
                                 //start keyword based search
                                 while (iterator.hasNext()) {
@@ -102,27 +100,25 @@ public class TweetSearchApplication {
                                     System.out.println("Current keyword is: " + keyCurrent);
 
                                     try {
-
-                                        searchTweets.keywordQuery(keyCurrent); //Start the search
+                                        tweetExplorer.keywordQuery(keyCurrent); //Start the search
                                         currentKey.remove(); //Remove from the current queue
                                     } catch (IOException | InterruptedException ex) {
                                         ex.printStackTrace();
                                     }
                                 }
 
-
                                 //start location based search
                                 while (iterator1.hasNext() && iterator2.hasNext() && iterator3.hasNext()) {
                                     Double lat = currentLat.peek();
                                     Double lon = currentLon.peek();
-                                    Double rad = currentLRad.peek();
+                                    Double rad = currentRad.peek();
                                     System.out.println("Current Latitude, Longitude and Radius: " + lat.toString() + "," + lon.toString() + ',' + rad.toString());
                                     try {
-                                        searchTweets.locationQuery(lat, lon, rad); //Search start
+                                        tweetExplorer.locationQuery(lat, lon, rad); //Search start
                                         //remove from the current queue
                                         currentLat.remove();
                                         currentLon.remove();
-                                        currentLRad.remove();
+                                        currentRad.remove();
 
                                     } catch (IOException | InterruptedException ex) {
                                         ex.printStackTrace();
@@ -133,13 +129,13 @@ public class TweetSearchApplication {
                                 currentKey = new LinkedList<>(keywordQueue);
                                 currentLat = new LinkedList<>(latitudeQeue);
                                 currentLon = new LinkedList<>(longitudeQeue);
-                                currentLRad = new LinkedList<>(radiusQeue);
+                                currentRad = new LinkedList<>(radiusQeue);
 
                                 //get the iterator for the newly assigned queue
                                 iterator = currentKey.iterator();
                                 iterator1 = currentLat.iterator();
                                 iterator2 = currentLon.iterator();
-                                iterator3 = currentLRad.iterator();
+                                iterator3 = currentRad.iterator();
 
                             }
 

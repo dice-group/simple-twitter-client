@@ -18,7 +18,6 @@ public class TweetExtractor {
     private StoreMaxID storeMaxID = new StoreMaxID();
     private Twitter twitter = TwitterFactory.getSingleton();
     private boolean remainingTweet;
-
     public boolean rateLimit;
 
     /**
@@ -54,7 +53,7 @@ public class TweetExtractor {
                 oldestTweetID = 0;
                 for (Status i : queryTweets) {
                     oldestTweetID = i.getId();
-                    writer.append(i.getText());
+                    writer.append(i.toString());
                 }
                 counter++;
                 rateLimit = new RateLimitChecker().rateLimitCheck();

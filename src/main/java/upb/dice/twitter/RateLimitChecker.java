@@ -12,7 +12,6 @@ import java.util.Map;
  */
 public class RateLimitChecker {
     private Twitter twitter = TwitterFactory.getSingleton();
-
     /**
      * This method checks if the rate limit has been reached for the current search
      *
