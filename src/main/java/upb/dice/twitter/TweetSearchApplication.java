@@ -1,5 +1,6 @@
 package upb.dice.twitter;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.*;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ public class TweetSearchApplication {
 
     public static void main(String[] args) {
 
+        final Logger LOGGER = LoggerFactory.getLogger(TweetSearchApplication.class);
         // original queue of keywords
         Queue<String> keywordQueue = new LinkedList<>();
 
@@ -52,7 +54,6 @@ public class TweetSearchApplication {
                     if (cmd.hasOption("k")) {
                         String[] searchArgs = cmd.getOptionValues("k");
                         keywordQueue.addAll(Arrays.asList(searchArgs));
-
                     }
                     if (cmd.hasOption("l")) {
                         String[] searchArgs = cmd.getOptionValues("l");
@@ -67,7 +68,6 @@ public class TweetSearchApplication {
 
                         }
                     }
-
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
 
@@ -83,7 +83,6 @@ public class TweetSearchApplication {
                             LinkedList<Double> currentLon = new LinkedList<>(longitudeQeue);
                             LinkedList<Double> currentRad = new LinkedList<>(radiusQeue);
 
-
                             //get iterators for the queue
                             iterator = currentKey.iterator();
                             iterator1 = currentLat.iterator();
@@ -96,7 +95,7 @@ public class TweetSearchApplication {
                                 //start keyword based search
                                 while (iterator.hasNext()) {
                                     String keyCurrent = currentKey.peek();
-                                    System.out.println("Current keyword is: " + keyCurrent);
+                                    LOGGER.info("Current keyword is: " + keyCurrent);
 
                                     try {
                                         tweetExplorer.keywordQuery(keyCurrent); //Start the search
@@ -111,7 +110,7 @@ public class TweetSearchApplication {
                                     Double lat = currentLat.peek();
                                     Double lon = currentLon.peek();
                                     Double rad = currentRad.peek();
-                                    System.out.println("Current Latitude, Longitude and Radius: " + lat.toString() + "," + lon.toString() + ',' + rad.toString());
+                                    LOGGER.info("Current Latitude, Longitude and Radius: " + lat.toString() + "," + lon.toString() + ',' + rad.toString());
                                     try {
                                         tweetExplorer.locationQuery(lat, lon, rad); //Search start
                                         //remove from the current queue
@@ -140,7 +139,7 @@ public class TweetSearchApplication {
 
                         }
                     }, 0, checkPeriod[0]);
-                    System.out.println("Running at: " + new Date());
+                    LOGGER.info("Running at: " + new Date());
                 }
             }
         } catch (ParseException | NumberFormatException e) {

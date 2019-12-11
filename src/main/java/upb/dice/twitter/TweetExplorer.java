@@ -13,6 +13,7 @@ public class TweetExplorer {
 
     private MaxIDChecker maxIDChecker = new MaxIDChecker();
     private TweetExtractor tweetExtractor = new TweetExtractor();
+
     /**
      * This method builds a query based on the keyword and extracts the tweets containing this keyword
      *

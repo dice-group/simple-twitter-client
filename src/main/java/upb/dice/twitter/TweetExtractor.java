@@ -1,5 +1,7 @@
 package upb.dice.twitter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import twitter4j.*;
 
 import java.io.File;
@@ -15,6 +17,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class TweetExtractor {
 
+    private static String directoryName = "Tweets_Search_Details";
+    private static String TweetDataFilepath = directoryName + File.separator + "Tweet_object.txt";
+    private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitChecker.class);
     private StoreMaxID storeMaxID = new StoreMaxID();
     private Twitter twitter = TwitterFactory.getSingleton();
     private boolean remainingTweet;
@@ -29,9 +34,8 @@ public class TweetExtractor {
         QueryResult queryResult;
         try {
             rateLimit = new RateLimitChecker().rateLimitCheck();
-            System.out.println("Tweets search Start");
-            String directoryName = "Tweets Search Details";
-            File file = new File("Tweets Search Details" + File.separator + "Tweet object.txt");
+            LOGGER.info("Tweets search Start");
+            File file = new File(TweetDataFilepath);
             FileWriter writer = new FileWriter(file, true);
             int counter = 0;
             long sinceID = 0;
@@ -46,8 +50,7 @@ public class TweetExtractor {
                     sinceID = queryResult.getSinceId();
                     if (query.getQuery() != null) {
                         storeMaxID.keywordBasedMaxID(maxId, query);
-                    }
-                    else {
+                    } else {
                         storeMaxID.locationBasedMaxID(maxId, query);
                     }
                 }
@@ -67,16 +70,16 @@ public class TweetExtractor {
                 query.setUntil(String.valueOf(oldestTweetID));
                 remainingTweet = true;
                 rateLimit = false;
-                System.out.println("In extracting the remaining tweets. Current time is: " + new Date());
+                LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
                 TimeUnit.MINUTES.sleep(15);
                 getTweet(query);
             }
             writer.close();
         } catch (TwitterException | IOException | InterruptedException e) {
-            System.out.println(e);
+            LOGGER.error(e.toString());
             rateLimit = true;
             TimeUnit.MINUTES.sleep(15);
         }
-        System.out.println("Tweets search End");
+        LOGGER.info("Tweets search End");
     }
 }
