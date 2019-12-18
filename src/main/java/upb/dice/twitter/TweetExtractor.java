@@ -19,11 +19,13 @@ public class TweetExtractor {
 
     private static String directoryName = "Tweets_Search_Details";
     private static String TweetDataFilepath = directoryName + File.separator + "Tweet_object.txt";
-    private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitChecker.class);
-    private StoreMaxID storeMaxID = new StoreMaxID();
+    public long oldestTweetID;
+    private Logger LOGGER = LoggerFactory.getLogger(TweetExtractor.class);
+    private IDHandler idHandler = new IDHandler();
     private Twitter twitter = TwitterFactory.getSingleton();
     private boolean remainingTweet;
     public boolean rateLimit;
+    private long maxId;
 
     /**
      * Recursive search for tweets based on this query and store the maxID for the search results
@@ -32,29 +34,29 @@ public class TweetExtractor {
      */
     public void getTweet(Query query) throws InterruptedException {
         QueryResult queryResult;
+        System.out.println(query);
+        Query query1 = query;
+        oldestTweetID = 0;
+        long sinceID;
         try {
             rateLimit = new RateLimitChecker().rateLimitCheck();
             LOGGER.info("Tweets search Start");
             File file = new File(TweetDataFilepath);
             FileWriter writer = new FileWriter(file, true);
             int counter = 0;
-            long sinceID = 0;
-            long oldestTweetID;
+            sinceID = 0;
+
             do {
                 queryResult = twitter.search(query);
                 List<Status> queryTweets = queryResult.getTweets();
-                long maxId = queryResult.getMaxId();
 
-                //the first page and the first time
-                if (counter == 0 && !remainingTweet) {
+                //the first page and the first time store maxID
+                if (counter == 0) {
+                    maxId = queryResult.getMaxId();
                     sinceID = queryResult.getSinceId();
-                    if (query.getQuery() != null) {
-                        storeMaxID.keywordBasedMaxID(maxId, query);
-                    } else {
-                        storeMaxID.locationBasedMaxID(maxId, query);
-                    }
+                    idHandler.storeMaxID(maxId, query);
                 }
-                oldestTweetID = 0;
+
                 for (Status i : queryTweets) {
                     oldestTweetID = i.getId();
                     writer.append(i.toString());
@@ -64,21 +66,33 @@ public class TweetExtractor {
             }
             while (((query = queryResult.nextQuery()) != null) && (!rateLimit) && oldestTweetID > sinceID);
 
-            //if the rate limit has reached and there is a gap between the base and the current tweet, redo the search with the oldest tweet as the upper bound
+            /*
+            if the rate limit has reached and there is a gap between the baseID and the current tweet, redo the search with the oldest tweet as the upper bound
+            also store the oldestTweetID and sinceID, else simply store the maxID as sinceID and oldestTweetID which is the scenario wherein the rate limit has not reached
+            and the gap does not exist
+            */
             if (oldestTweetID - sinceID > 0 && rateLimit && query != null) {
-                query.setSinceId(sinceID);
+                idHandler.writeOldestTweetID(oldestTweetID, query1);
+                idHandler.writeSinceID(sinceID, query1);
                 query.setUntil(String.valueOf(oldestTweetID));
+                query.setSinceId(sinceID);
                 remainingTweet = true;
                 rateLimit = false;
                 LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
                 TimeUnit.MINUTES.sleep(15);
                 getTweet(query);
+            } else {
+                idHandler.writeOldestTweetID(maxId, query1);
+                idHandler.writeSinceID(maxId, query1);
             }
+
             writer.close();
-        } catch (TwitterException | IOException | InterruptedException e) {
+
+        } catch (TwitterException | IOException e) {
             LOGGER.error(e.toString());
             rateLimit = true;
             TimeUnit.MINUTES.sleep(15);
+            getTweet(query);
         }
         LOGGER.info("Tweets search End");
     }

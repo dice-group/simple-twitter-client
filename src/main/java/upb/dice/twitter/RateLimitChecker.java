@@ -6,14 +6,13 @@ import twitter4j.RateLimitStatus;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-
 import java.util.Map;
 
 /**
  * Checks the rate limit for the requests to determine the remaining limit for the search
  */
 public class RateLimitChecker {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RateLimitChecker.class);
+    private Logger LOGGER = LoggerFactory.getLogger(RateLimitChecker.class);
     private Twitter twitter = TwitterFactory.getSingleton();
 
     /**
@@ -21,7 +20,7 @@ public class RateLimitChecker {
      *
      * @return true if the rate limit has reached or false if the rate limit has not reached
      */
-    public boolean rateLimitCheck() throws TwitterException, InterruptedException {
+    public boolean rateLimitCheck() throws TwitterException {
         Map<String, RateLimitStatus> rateLimit = twitter.getRateLimitStatus();
         for (String status : rateLimit.keySet()) {
             RateLimitStatus timeLeft = rateLimit.get(status);

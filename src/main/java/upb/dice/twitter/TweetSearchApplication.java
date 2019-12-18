@@ -1,7 +1,9 @@
 package upb.dice.twitter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.cli.*;
+import twitter4j.Query;
 
 import java.io.IOException;
 import java.util.*;
@@ -71,7 +73,8 @@ public class TweetSearchApplication {
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
 
-                        TweetExplorer tweetExplorer  = new TweetExplorer();
+                        QueryGenerator tweetExplorer = new QueryGenerator();
+                        private TweetExtractor tweetExtractor = new TweetExtractor();
 
                         @Override
                         public void run() {
@@ -98,7 +101,8 @@ public class TweetSearchApplication {
                                     LOGGER.info("Current keyword is: " + keyCurrent);
 
                                     try {
-                                        tweetExplorer.keywordQuery(keyCurrent); //Start the search
+                                        Query keywordQuery = tweetExplorer.keywordQueryGen(keyCurrent);
+                                        tweetExtractor.getTweet(keywordQuery);//Start the search
                                         currentKey.remove(); //Remove from the current queue
                                     } catch (IOException | InterruptedException ex) {
                                         ex.printStackTrace();
@@ -112,7 +116,8 @@ public class TweetSearchApplication {
                                     Double rad = currentRad.peek();
                                     LOGGER.info("Current Latitude, Longitude and Radius: " + lat.toString() + "," + lon.toString() + ',' + rad.toString());
                                     try {
-                                        tweetExplorer.locationQuery(lat, lon, rad); //Search start
+                                        Query locationQuery = tweetExplorer.locationQueryGen(lat, lon, rad);
+                                        tweetExtractor.getTweet(locationQuery);//Search start
                                         //remove from the current queue
                                         currentLat.remove();
                                         currentLon.remove();
@@ -122,7 +127,6 @@ public class TweetSearchApplication {
                                         ex.printStackTrace();
                                     }
                                 }
-
                                 //initialize new queue by copying values from the original queue
                                 currentKey = new LinkedList<>(keywordQueue);
                                 currentLat = new LinkedList<>(latitudeQeue);
