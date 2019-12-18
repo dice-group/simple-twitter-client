@@ -12,8 +12,8 @@ import java.util.*;
  */
 public class IDHandler {
     private static String directoryName = "Tweets_Search_Details";
-    private static String keywordMaxIDFilepath = directoryName + File.separator + "Keyword_MaxID.txt";
-    private static String locationMaxIDFilepath = directoryName + File.separator + "Location_MaxID.txt";
+    private static String keywordMaxIDFilepath = directoryName + File.separator + "Keyword_MaxID1.txt";
+    private static String locationMaxIDFilepath = directoryName + File.separator + "Location_MaxID1.txt";
 
     /**
      * This method stores the maxID depending on the query
@@ -81,11 +81,13 @@ public class IDHandler {
         String lat_str = String.valueOf(geoLocation.getLatitude());
         String lon_str = String.valueOf(geoLocation.getLongitude());
         List<Long> IDList = new ArrayList<>();
-        IDList.add(-1L);
-        IDList.add(-1L);
-        IDList.add(-1L);
         if (pairStringMap.containsKey(Arrays.asList(lat_str, lon_str))) {
             IDList = pairStringMap.get(Arrays.asList(lat_str, lon_str));
+        } else {
+            IDList.add(-1L);
+            IDList.add(-1L);
+            IDList.add(-1L);
+
         }
         return IDList;
     }

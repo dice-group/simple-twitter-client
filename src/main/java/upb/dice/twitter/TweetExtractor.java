@@ -34,7 +34,6 @@ public class TweetExtractor {
      */
     public void getTweet(Query query) throws InterruptedException {
         QueryResult queryResult;
-        System.out.println(query);
         Query query1 = query;
         oldestTweetID = 0;
         long sinceID;
