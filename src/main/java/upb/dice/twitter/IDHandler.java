@@ -55,6 +55,7 @@ public class IDHandler {
             String line = scan.nextLine();
             if (line.contains(key) && line.length() < 4) {
                 String[] splitString = line.split(",");
+
                 //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
                 if (splitString[2] != null) {
                     list.set(0, Long.parseLong(splitString[1]));
@@ -86,6 +87,7 @@ public class IDHandler {
             String line = scan.nextLine();
             if (line.contains((geoLocation.getLatitude() + "," + geoLocation.getLongitude())) && line.length() == 6) {
                 String[] splitString = line.split(",");
+
                 //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
                 if (splitString[4] != null) {
                     list.set(0, Long.parseLong(splitString[1]));
