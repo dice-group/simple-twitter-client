@@ -36,16 +36,14 @@ public class QueryGenerator {
     /**
      * This method builds the query based on the location provided
      *
-     * @param latitude  of the location
-     * @param longitude of the location
+     * @param geoQuery geoquery required to generate a location based query
      * @param radius    coverage from the location point
      * @return query which is built based on the location attributes and the sinceID (if available)
      */
-    public Query locationQueryGen(double latitude, double longitude, double radius) throws IOException {
-        GeoQuery geoQuery = new GeoQuery(new GeoLocation(latitude, longitude));
+    public Query locationQueryGen(GeoQuery geoQuery, double radius) throws IOException {
         Query query = new Query();
         query.setGeoCode(geoQuery.getLocation(), radius, Query.KILOMETERS);
-        List<Long> detailesID = idHandler.locationParse(new GeoLocation(latitude, longitude));
+        List<Long> detailesID = idHandler.locationParse(new GeoLocation(geoQuery.getLocation().getLatitude(), geoQuery.getLocation().getLongitude()));
         long maxID = detailesID.get(0), oldestTweetID = detailesID.get(1), sinceID = detailesID.get(2);
         if (oldestTweetID - sinceID > 0) {
             query.setSinceId(sinceID);
