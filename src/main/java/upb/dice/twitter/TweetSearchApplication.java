@@ -1,12 +1,16 @@
 package upb.dice.twitter;
 
+import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.cli.*;
+import twitter4j.GeoLocation;
+import twitter4j.GeoQuery;
 import twitter4j.Query;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * An application which extracts tweets based on a specific keyword or location provided by the user.
@@ -19,12 +23,12 @@ public class TweetSearchApplication {
 
         final Logger LOGGER = LoggerFactory.getLogger(TweetSearchApplication.class);
         // original queue of keywords
-        Queue<String> keywordQueue = new LinkedList<>();
 
-        //original queue of location details (radius, latitude and longitude)
-        Queue<Double> radiusQeue = new LinkedList<>();
-        Queue<Double> latitudeQeue = new LinkedList<>();
-        Queue<Double> longitudeQeue = new LinkedList<>();
+//       Queue<String> keywordQueue = new LinkedList<>();
+        List<String> keywordQueue = new ArrayList<>();
+
+        //original queue of location details
+        Map<GeoQuery, Long> locationsQueue = new HashMap<>();
 
         //the period of execution aka the time of the every batch
         final long[] checkPeriod = {60 * 60 * 1000};
@@ -49,6 +53,7 @@ public class TweetSearchApplication {
             if (cmd != null && cmd.hasOption("h")) {
                 HelpFormatter formatter = new HelpFormatter();
                 formatter.printHelp("Command Line Helper", options);
+
             }
             //either keyword or location based
             else {
@@ -61,92 +66,101 @@ public class TweetSearchApplication {
                         String[] searchArgs = cmd.getOptionValues("l");
                         int j = 0;
                         while (j < (searchArgs.length - 1)) {
-                            latitudeQeue.add(Double.parseDouble(searchArgs[j]));
-                            longitudeQeue.add(Double.parseDouble(searchArgs[j + 1]));
-                            radiusQeue.add(Double.parseDouble(searchArgs[j + 2]));
+                            locationsQueue.put(new GeoQuery(new GeoLocation((Double.parseDouble(searchArgs[j])), Double.parseDouble(searchArgs[j + 1]))), Long.parseLong(searchArgs[j + 2]));
                             long periodSeconds = Long.parseLong(searchArgs[searchArgs.length - 1]);
                             checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
+//                            checkPeriod[0] = 10;
                             j = j + 3;
 
                         }
                     }
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
-
-                        QueryGenerator tweetExplorer = new QueryGenerator();
-                        private TweetExtractor tweetExtractor = new TweetExtractor();
-
-                        @Override
-                        public void run() {
-                            Iterator iterator, iterator1, iterator2, iterator3;
-
-                            //initialize a new queue by copying from the original queue
-                            LinkedList<String> currentKey = new LinkedList<>(keywordQueue);
-                            LinkedList<Double> currentLat = new LinkedList<>(latitudeQeue);
-                            LinkedList<Double> currentLon = new LinkedList<>(longitudeQeue);
-                            LinkedList<Double> currentRad = new LinkedList<>(radiusQeue);
-
-                            //get iterators for the queue
-                            iterator = currentKey.iterator();
-                            iterator1 = currentLat.iterator();
-                            iterator2 = currentLon.iterator();
-                            iterator3 = currentRad.iterator();
-
-                            //runs forever with the queues being assigned inside the while loop
-                            while ((iterator.hasNext()) || (iterator1.hasNext() && iterator2.hasNext() && iterator3.hasNext())) {
-
-                                //start keyword based search
-                                while (iterator.hasNext()) {
-                                    String keyCurrent = currentKey.peek();
-                                    LOGGER.info("Current keyword is: " + keyCurrent);
-
-                                    try {
-                                        Query keywordQuery = tweetExplorer.keywordQueryGen(keyCurrent);
-                                        tweetExtractor.getTweet(keywordQuery);//Start the search
-                                        currentKey.remove(); //Remove from the current queue
-                                    } catch (IOException | InterruptedException ex) {
-                                        ex.printStackTrace();
-                                    }
-                                }
-
-                                //start location based search
-                                while (iterator1.hasNext() && iterator2.hasNext() && iterator3.hasNext()) {
-                                    Double lat = currentLat.peek();
-                                    Double lon = currentLon.peek();
-                                    Double rad = currentRad.peek();
-                                    LOGGER.info("Current Latitude, Longitude and Radius: " + lat.toString() + "," + lon.toString() + ',' + rad.toString());
-                                    try {
-                                        Query locationQuery = tweetExplorer.locationQueryGen(lat, lon, rad);
-                                        tweetExtractor.getTweet(locationQuery);//Search start
-                                        //remove from the current queue
-                                        currentLat.remove();
-                                        currentLon.remove();
-                                        currentRad.remove();
-
-                                    } catch (IOException | InterruptedException ex) {
-                                        ex.printStackTrace();
-                                    }
-                                }
-                                //initialize new queue by copying values from the original queue
-                                currentKey = new LinkedList<>(keywordQueue);
-                                currentLat = new LinkedList<>(latitudeQeue);
-                                currentLon = new LinkedList<>(longitudeQeue);
-                                currentRad = new LinkedList<>(radiusQeue);
-
-                                //get the iterator for the newly assigned queue
-                                iterator = currentKey.iterator();
-                                iterator1 = currentLat.iterator();
-                                iterator2 = currentLon.iterator();
-                                iterator3 = currentRad.iterator();
-
-                            }
-
-                        }
-                    }, 0, checkPeriod[0]);
-                    LOGGER.info("Running at: " + new Date());
                 }
+                IDHandler idHandler = new IDHandler();
+                QueryGenerator tweetExplorer = new QueryGenerator();
+                TweetExtractor tweetExtractor = new TweetExtractor();
+                final Iterator[] iterator_current = {keywordQueue.iterator()};
+                final Iterator[] iterator1_current = {locationsQueue.entrySet().iterator()};
+
+                Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+
+                        //start keyword based search
+                        while (iterator_current[0].hasNext()) {
+                            try {
+                                String keyword = (String) iterator_current[0].next();
+                                Query keywordQuery = tweetExplorer.keywordQueryGen(keyword);
+                                tweetExtractor.getTweet(keywordQuery);//Start the search
+                            } catch (IOException | InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                        //sort the keywords in the decreasing order of their gap which exists and give the keyword with higher gap as the priority to
+                        // query in the next timer
+                        Map<String, Long> sortedKeyID = new HashMap<>();
+                        for (String key : keywordQueue) {
+                            try {
+                                List<Long> keyIDList = idHandler.keyParse(key);
+                                Map<String, Long> keyID = new HashMap<>();
+                                keyID.put(key, keyIDList.get(1) - keyIDList.get(2));
+                                //give the key with larger gap the highest priority
+//                                sortedKeyID = keyID.entrySet().stream().sorted((Entry.<String, Long>comparingByValue().reversed()))
+//                                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, HashMap::new));
+                                keyID.entrySet()
+                                        .stream()
+                                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                                        .forEachOrdered(x -> sortedKeyID.put(x.getKey(), x.getValue()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        iterator_current[0] = sortedKeyID.keySet().iterator();
+
+                        //start location based search
+                        while (iterator1_current[0].hasNext()) {
+                            Entry pair = (Entry) iterator1_current[0].next();
+                            GeoQuery curentLoc = (GeoQuery) pair.getKey();
+                            double latitude = curentLoc.getLocation().getLatitude();
+                            double longitude = curentLoc.getLocation().getLongitude();
+                            long radius = (long) pair.getValue();
+                            LOGGER.info("Current Latitude, Longitude and Radius: " + latitude + "," + longitude + ',' + radius);
+                            try {
+                                Query locationQuery = tweetExplorer.locationQueryGen(curentLoc, radius);
+//                                    Query locationQuery = tweetExplorer.locationQueryGen(curentLoc, radius);
+                                tweetExtractor.getTweet(locationQuery); //Search start
+
+                            } catch (IOException | InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+
+                        //sort the location details in the decreasing order of their gap which exists and give the location with higher gap as the priority to
+                        // query with in the next timer
+                        LinkedHashMap<GeoQuery, Long> sortedLocID = new LinkedHashMap<>();
+                        for (Entry<GeoQuery, Long> lc : locationsQueue.entrySet()) {
+                            try {
+                                GeoQuery curentLoc = lc.getKey();
+                                GeoLocation location = curentLoc.getLocation();
+                                List<Long> locIDList = idHandler.locationParse(location);
+                                Map<GeoQuery, Long> locID = new HashMap<>();
+                                locID.put(curentLoc, locIDList.get(1) - locIDList.get(2));
+                                locID.entrySet()
+                                        .stream()
+                                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                                        .forEachOrdered(x -> sortedLocID.put(x.getKey(), x.getValue()));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        iterator1_current[0] = sortedLocID.entrySet().iterator();
+                    }
+                }, 0, checkPeriod[0]);
+                LOGGER.info("Running at: " + new Date());
             }
-        } catch (ParseException | NumberFormatException e) {
+        } catch (ParseException |
+                NumberFormatException e) {
             e.printStackTrace();
         }
     }
