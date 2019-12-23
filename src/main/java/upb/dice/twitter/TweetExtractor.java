@@ -17,8 +17,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class TweetExtractor {
 
-    private static String directoryName = "Tweets_Search_Details";
-    private static String TweetDataFilepath = directoryName + File.separator + "Tweet_object.txt";
+    private final static String directoryName = "Tweets_Search_Details";
+    private final static String TweetDataFilepath = directoryName + File.separator + "Tweet_object1.txt";
     public long oldestTweetID;
     private Logger LOGGER = LoggerFactory.getLogger(TweetExtractor.class);
     private IDHandler idHandler = new IDHandler();
@@ -26,6 +26,8 @@ public class TweetExtractor {
     private boolean remainingTweet;
     public boolean rateLimit;
     private long maxId;
+    Query query1;
+    long sinceID;
 
     /**
      * Recursive search for tweets based on this query and store the maxID for the search results
@@ -34,9 +36,9 @@ public class TweetExtractor {
      */
     public void getTweet(Query query) throws InterruptedException {
         QueryResult queryResult;
-        Query query1 = query;
+        query1 = query;
         oldestTweetID = 0;
-        long sinceID;
+
         try {
             rateLimit = new RateLimitChecker().rateLimitCheck();
             LOGGER.info("Tweets search Start");
@@ -44,7 +46,6 @@ public class TweetExtractor {
             FileWriter writer = new FileWriter(file, true);
             int counter = 0;
             sinceID = 0;
-
             do {
                 queryResult = twitter.search(query);
                 List<Status> queryTweets = queryResult.getTweets();
@@ -55,10 +56,11 @@ public class TweetExtractor {
                     sinceID = queryResult.getSinceId();
                     idHandler.storeMaxID(maxId, query);
                 }
-
+                int j = 1;
                 for (Status i : queryTweets) {
                     oldestTweetID = i.getId();
-                    writer.append(i.toString());
+                    writer.append(String.valueOf(j)).append(i.toString());
+                    j++;
                 }
                 counter++;
                 rateLimit = new RateLimitChecker().rateLimitCheck();
@@ -73,18 +75,11 @@ public class TweetExtractor {
             if (oldestTweetID - sinceID > 0 && rateLimit && query != null) {
                 idHandler.writeOldestTweetID(oldestTweetID, query1);
                 idHandler.writeSinceID(sinceID, query1);
-                query.setUntil(String.valueOf(oldestTweetID));
-                query.setSinceId(sinceID);
-                remainingTweet = true;
-                rateLimit = false;
-                LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
-                TimeUnit.MINUTES.sleep(15);
-                getTweet(query);
+                extractRemaining(query);
             } else {
                 idHandler.writeOldestTweetID(maxId, query1);
                 idHandler.writeSinceID(maxId, query1);
             }
-
             writer.close();
 
         } catch (TwitterException | IOException e) {
@@ -94,5 +89,19 @@ public class TweetExtractor {
             getTweet(query);
         }
         LOGGER.info("Tweets search End");
+    }
+
+    /**
+     * Sets the current query with the upper bound as the oldestTweetID with the same sinceID
+     * @param query which has not extracted all the available data
+     */
+    public void extractRemaining(Query query) throws InterruptedException {
+        query.setUntil(String.valueOf(oldestTweetID));
+        query.setSinceId(sinceID);
+        remainingTweet = true;
+        rateLimit = false;
+        LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
+        TimeUnit.MINUTES.sleep(15);
+        getTweet(query);
     }
 }
