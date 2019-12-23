@@ -23,7 +23,6 @@ public class TweetSearchApplication {
 
         final Logger LOGGER = LoggerFactory.getLogger(TweetSearchApplication.class);
         // original queue of keywords
-
 //       Queue<String> keywordQueue = new LinkedList<>();
         List<String> keywordQueue = new ArrayList<>();
 
@@ -91,6 +90,7 @@ public class TweetSearchApplication {
                             try {
                                 String keyword = (String) iterator_current[0].next();
                                 Query keywordQuery = tweetExplorer.keywordQueryGen(keyword);
+                                LOGGER.info("Current Keyword is: "+keyword);
                                 tweetExtractor.getTweet(keywordQuery);//Start the search
                             } catch (IOException | InterruptedException ex) {
                                 ex.printStackTrace();
