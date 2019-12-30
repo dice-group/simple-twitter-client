@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An application which extracts tweets based on a specific keyword or location provided by the user.
@@ -23,11 +24,10 @@ public class TweetSearchApplication {
 
         final Logger LOGGER = LoggerFactory.getLogger(TweetSearchApplication.class);
         // original queue of keywords
-//       Queue<String> keywordQueue = new LinkedList<>();
         List<String> keywordQueue = new ArrayList<>();
 
         //original queue of location details
-        Map<GeoQuery, Long> locationsQueue = new HashMap<>();
+        final Map<GeoQuery, Long> locationsQueue = new HashMap<>();
 
         //the period of execution aka the time of the every batch
         final long[] checkPeriod = {60 * 60 * 1000};
@@ -67,16 +67,15 @@ public class TweetSearchApplication {
                         while (j < (searchArgs.length - 1)) {
                             locationsQueue.put(new GeoQuery(new GeoLocation((Double.parseDouble(searchArgs[j])), Double.parseDouble(searchArgs[j + 1]))), Long.parseLong(searchArgs[j + 2]));
                             long periodSeconds = Long.parseLong(searchArgs[searchArgs.length - 1]);
-                            checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
-//                            checkPeriod[0] = 10;
+//                            checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
+                            checkPeriod[0] = 10;
                             j = j + 3;
 
                         }
                     }
                 }
                 IDHandler idHandler = new IDHandler();
-                QueryGenerator tweetExplorer = new QueryGenerator();
-                TweetExtractor tweetExtractor = new TweetExtractor();
+                DataExtractor tweetExtractor = new TweetExtractor();
                 final Iterator[] iterator_current = {keywordQueue.iterator()};
                 final Iterator[] iterator1_current = {locationsQueue.entrySet().iterator()};
 
@@ -84,84 +83,91 @@ public class TweetSearchApplication {
                 timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
-
                         //start keyword based search
                         while (iterator_current[0].hasNext()) {
                             try {
                                 String keyword = (String) iterator_current[0].next();
-                                Query keywordQuery = tweetExplorer.keywordQueryGen(keyword);
-                                LOGGER.info("Current Keyword is: "+keyword);
-                                tweetExtractor.getTweet(keywordQuery);//Start the search
-                            } catch (IOException | InterruptedException ex) {
-                                ex.printStackTrace();
+                                LOGGER.info("Current Keyword is: " + keyword);
+                                tweetExtractor.getData( new KeywordQuery(keyword).generateQuery());//Start the search
+                            } catch (IOException e) {
+                                LOGGER.error(e.getMessage());
                             }
                         }
+
                         //sort the keywords in the decreasing order of their gap which exists and give the keyword with higher gap as the priority to
                         // query in the next timer
                         Map<String, Long> sortedKeyID = new HashMap<>();
+                        Map<String, Long> keyID = new HashMap<>();
                         for (String key : keywordQueue) {
                             try {
-                                List<Long> keyIDList = idHandler.keyParse(key);
-                                Map<String, Long> keyID = new HashMap<>();
+                                List<Long> keyIDList = idHandler.retrieveCurrentState(new KeywordQuery(key).generateQuery());
                                 keyID.put(key, keyIDList.get(1) - keyIDList.get(2));
-                                //give the key with larger gap the highest priority
-//                                sortedKeyID = keyID.entrySet().stream().sorted((Entry.<String, Long>comparingByValue().reversed()))
-//                                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, HashMap::new));
-                                keyID.entrySet()
-                                        .stream()
-                                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                                        .forEachOrdered(x -> sortedKeyID.put(x.getKey(), x.getValue()));
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                LOGGER.error(e.getMessage());
                             }
                         }
-
+                        keyID.entrySet()
+                                .stream()
+                                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                                .forEachOrdered(x -> sortedKeyID.put(x.getKey(), x.getValue()));
                         iterator_current[0] = sortedKeyID.keySet().iterator();
 
-                        //start location based search
+//                      start location based search
                         while (iterator1_current[0].hasNext()) {
                             Entry pair = (Entry) iterator1_current[0].next();
                             GeoQuery curentLoc = (GeoQuery) pair.getKey();
-                            double latitude = curentLoc.getLocation().getLatitude();
-                            double longitude = curentLoc.getLocation().getLongitude();
-                            long radius = (long) pair.getValue();
-                            LOGGER.info("Current Latitude, Longitude and Radius: " + latitude + "," + longitude + ',' + radius);
+                            LOGGER.info("Current Latitude and Longitude " + curentLoc.getLocation().getLatitude() + "," + curentLoc.getLocation().getLongitude()+','+pair.getValue());
                             try {
-                                Query locationQuery = tweetExplorer.locationQueryGen(curentLoc, radius);
-//                                    Query locationQuery = tweetExplorer.locationQueryGen(curentLoc, radius);
-                                tweetExtractor.getTweet(locationQuery); //Search start
-
-                            } catch (IOException | InterruptedException ex) {
-                                ex.printStackTrace();
+                                Query locationQuery = new LocationQuery(curentLoc,(long)pair.getValue()).generateQuery();
+                                tweetExtractor.getData(locationQuery); //Search start
+                            } catch (IOException e) {
+                                LOGGER.error(e.getMessage());
                             }
                         }
 
                         //sort the location details in the decreasing order of their gap which exists and give the location with higher gap as the priority to
                         // query with in the next timer
-                        LinkedHashMap<GeoQuery, Long> sortedLocID = new LinkedHashMap<>();
+//                        LinkedHashMap<GeoQuery, Long> sortedLocID = new LinkedHashMap<>();
+//                        for (Entry<GeoQuery, Long> lc : locationsQueue.entrySet()) {
+//                            try {
+//                                List<Long> locIDList = idHandler.retrieveCurrentState(new LocationQuery(lc.getKey(), lc.getValue()).generateQuery());
+//                                Map<GeoQuery, Long> locID = new HashMap<>();
+//                                locID.put(lc.getKey(), locIDList.get(1) - locIDList.get(2));
+//                                locID.entrySet()
+//                                        .stream()
+//                                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+//                                        .forEachOrdered(x -> sortedLocID.put(x.getKey(), x.getValue()));
+//                            } catch (IOException e) {
+//                                LOGGER.error(e.getMessage());
+//                            }
+//                        }
+                        LinkedHashMap<Map<GeoQuery, Long>, Long> sortedLocID = new LinkedHashMap<>();
+                        Map<Map<GeoQuery, Long>, Long> locID =  new HashMap<>();
                         for (Entry<GeoQuery, Long> lc : locationsQueue.entrySet()) {
                             try {
-                                GeoQuery curentLoc = lc.getKey();
-                                GeoLocation location = curentLoc.getLocation();
-                                List<Long> locIDList = idHandler.locationParse(location);
-                                Map<GeoQuery, Long> locID = new HashMap<>();
-                                locID.put(curentLoc, locIDList.get(1) - locIDList.get(2));
-                                locID.entrySet()
-                                        .stream()
-                                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                                        .forEachOrdered(x -> sortedLocID.put(x.getKey(), x.getValue()));
+                                List<Long> locIDList = idHandler.retrieveCurrentState(new LocationQuery(lc.getKey(), lc.getValue()).generateQuery());
+                                locID.put(Map.of(lc.getKey(), lc.getValue()), locIDList.get(1) - locIDList.get(2));
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                LOGGER.error(e.getMessage());
                             }
                         }
-                        iterator1_current[0] = sortedLocID.entrySet().iterator();
+                        locID.entrySet()
+                                .stream()
+                                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                                .forEachOrdered(x -> sortedLocID.put(x.getKey(), x.getValue()));
+
+                        Map<GeoQuery, Long> result = new HashMap<>();
+                        sortedLocID.forEach((map,id)->{
+                            map.forEach(result::put);});
+                        iterator1_current[0] = result.entrySet().iterator();
+
                     }
                 }, 0, checkPeriod[0]);
                 LOGGER.info("Running at: " + new Date());
             }
         } catch (ParseException |
                 NumberFormatException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage());
         }
     }
 }
