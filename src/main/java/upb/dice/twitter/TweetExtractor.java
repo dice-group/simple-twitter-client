@@ -12,10 +12,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * An implementation of the Data Extractor for twitter
  * If the rate limit is not reached, extract tweets based on the keywords or location (provided as latitude, longitude and the radius of coverage)
  * and stores them in a file. Also maintains a trackrecord in a file of the maxID obtained in every search
  */
-public class TweetExtractor {
+public class TweetExtractor implements DataExtractor {
 
     private final static String directoryName = "Tweets_Search_Details";
     private final static String TweetDataFilepath = directoryName + File.separator + "Tweet_object1.txt";
@@ -34,7 +35,7 @@ public class TweetExtractor {
      *
      * @param query search based on this query
      */
-    public void getTweet(Query query) throws InterruptedException {
+    public void getData(Query query) {
         QueryResult queryResult;
         query1 = query;
         oldestTweetID = 0;
@@ -54,7 +55,6 @@ public class TweetExtractor {
                 if (counter == 0) {
                     maxId = queryResult.getMaxId();
                     sinceID = queryResult.getSinceId();
-                    idHandler.storeMaxID(maxId, query);
                 }
                 int j = 1;
                 for (Status i : queryTweets) {
@@ -73,26 +73,29 @@ public class TweetExtractor {
             and the gap does not exist
             */
             if (oldestTweetID - sinceID > 0 && rateLimit && query != null) {
-                idHandler.writeOldestTweetID(oldestTweetID, query1);
-                idHandler.writeSinceID(sinceID, query1);
+                idHandler.writeCurrentState(query1, maxId, oldestTweetID, sinceID);
                 extractRemaining(query);
             } else {
-                idHandler.writeOldestTweetID(maxId, query1);
-                idHandler.writeSinceID(maxId, query1);
+                idHandler.writeCurrentState(query1, maxId, maxId, maxId);
             }
             writer.close();
 
-        } catch (TwitterException | IOException e) {
+        } catch (TwitterException | IOException | InterruptedException e) {
             LOGGER.error(e.toString());
             rateLimit = true;
-            TimeUnit.MINUTES.sleep(15);
-            getTweet(query);
+            try {
+                TimeUnit.MINUTES.sleep(15);
+            } catch (InterruptedException ex) {
+                LOGGER.error(e.toString());
+            }
+            getData(query);
         }
         LOGGER.info("Tweets search End");
     }
 
     /**
      * Sets the current query with the upper bound as the oldestTweetID with the same sinceID
+     *
      * @param query which has not extracted all the available data
      */
     public void extractRemaining(Query query) throws InterruptedException {
@@ -102,6 +105,6 @@ public class TweetExtractor {
         rateLimit = false;
         LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
         TimeUnit.MINUTES.sleep(15);
-        getTweet(query);
+        getData(query);
     }
 }
