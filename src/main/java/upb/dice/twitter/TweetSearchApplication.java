@@ -67,8 +67,8 @@ public class TweetSearchApplication {
                         while (j < (searchArgs.length - 1)) {
                             locationsQueue.put(new GeoQuery(new GeoLocation((Double.parseDouble(searchArgs[j])), Double.parseDouble(searchArgs[j + 1]))), Long.parseLong(searchArgs[j + 2]));
                             long periodSeconds = Long.parseLong(searchArgs[searchArgs.length - 1]);
-//                            checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
-                            checkPeriod[0] = 10;
+                            checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
+//                            checkPeriod[0] = 10;
                             j = j + 3;
 
                         }

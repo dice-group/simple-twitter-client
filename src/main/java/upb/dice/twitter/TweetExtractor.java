@@ -27,7 +27,7 @@ public class TweetExtractor implements DataExtractor {
     private boolean remainingTweet;
     public boolean rateLimit;
     private long maxId;
-    Query query1;
+    Query queryDup;
     long sinceID;
 
     /**
@@ -37,7 +37,7 @@ public class TweetExtractor implements DataExtractor {
      */
     public void getData(Query query) {
         QueryResult queryResult;
-        query1 = query;
+        queryDup = query;
         oldestTweetID = 0;
 
         try {
@@ -73,10 +73,10 @@ public class TweetExtractor implements DataExtractor {
             and the gap does not exist
             */
             if (oldestTweetID - sinceID > 0 && rateLimit && query != null) {
-                idHandler.writeCurrentState(query1, maxId, oldestTweetID, sinceID);
+                idHandler.writeCurrentState(queryDup, maxId, oldestTweetID, sinceID);
                 extractRemaining(query);
             } else {
-                idHandler.writeCurrentState(query1, maxId, maxId, maxId);
+                idHandler.writeCurrentState(queryDup, maxId, maxId, maxId);
             }
             writer.close();
 
