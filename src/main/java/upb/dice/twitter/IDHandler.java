@@ -64,32 +64,39 @@ public class IDHandler {
         file.getParentFile().mkdirs();
         file.createNewFile();
         Scanner scan = new Scanner(file);
-        while (scan.hasNext()) {
-            String line = scan.nextLine();
-            if (query.getQuery() != null && line.contains(query.getQuery()) && line.length() < 4) {
-                String[] splitString = line.split(",");
+        if (scan.hasNext()) {
+            do {
+                String line = scan.nextLine();
+                if (query.getQuery() != null){
+                    if(line.contains(query.getQuery())){
+                        String[] splitString = line.split(",");
 
-                //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
-                if (splitString[2] != null) {
-                    list.set(0, Long.parseLong(splitString[1]));
-                    list.set(1, Long.parseLong(splitString[2]));
-                }
-                if (splitString[3] != null) //if sinceID is not available, set the previously available sinceID
-                    list.set(2, Long.parseLong(splitString[3]));
-            } else if (query.getGeocode() != null) {
-                String[] splitString = query.getGeocode().split(",");
-                if (line.contains((splitString[0] + "," + splitString[1])) && line.length() == 6) {
-                    String[] splitStr = line.split(",");
-
-                    //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
-                    if (splitString[4] != null) {
-                        list.set(0, Long.parseLong(splitStr[1]));
-                        list.set(1, Long.parseLong(splitStr[2]));
+//                        if(splitString.length == 4)
+                        //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
+                        if (splitString[2] != null) {
+                            list.set(0, Long.parseLong(splitString[1]));
+                            list.set(1, Long.parseLong(splitString[2]));
+                        }
+                        if (splitString[3] != null) //if sinceID is not available, set the previously available sinceID
+                            list.set(2, Long.parseLong(splitString[3]));
                     }
-                    if (splitStr[5] != null) //if sinceID is not available, set the previously available sinceID
-                        list.set(2, Long.parseLong(splitStr[3]));
+                } else if (query.getGeocode() != null) {
+                    String[] locationString = query.getGeocode().split(",");
+                    if (line.contains((locationString[0] + "," + locationString[1]))) {
+                        String[] splitString = line.split(",");
+                        //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
+                        if (splitString[4] != null) {
+                            list.set(0, Long.parseLong(splitString[3]));
+                            list.set(1, Long.parseLong(splitString[4]));
+                        }
+                        if (splitString[5] != null) //if sinceID is not available, set the previously available sinceID
+                            list.set(2, Long.parseLong(splitString[5]));
+                    }
                 }
-            }
+            } while (scan.hasNext());
+        } else { //if nothing is found, set to -1 as usual 
+            list.set(0,-1L);
+            list.set(1, -1L);
         }
         scan.close();
         return list;
