@@ -88,7 +88,7 @@ public class TweetSearchApplication {
                             try {
                                 String keyword = (String) iterator_current[0].next();
                                 LOGGER.info("Current Keyword is: " + keyword);
-                                tweetExtractor.getData( new KeywordQuery(keyword).generateQuery());//Start the search
+                                tweetExtractor.storeData( new KeywordQuery(keyword).generateQuery());//Start the search
                             } catch (IOException e) {
                                 LOGGER.error(e.getMessage());
                             }
@@ -119,7 +119,7 @@ public class TweetSearchApplication {
                             LOGGER.info("Current Latitude and Longitude " + curentLoc.getLocation().getLatitude() + "," + curentLoc.getLocation().getLongitude()+','+pair.getValue());
                             try {
                                 Query locationQuery = new LocationQuery(curentLoc,(long)pair.getValue()).generateQuery();
-                                tweetExtractor.getData(locationQuery); //Search start
+                                tweetExtractor.storeData(locationQuery); //Search start
                             } catch (IOException e) {
                                 LOGGER.error(e.getMessage());
                             }

@@ -29,34 +29,32 @@ public class TweetExtractor implements DataExtractor {
     private long maxId;
     Query queryDup;
     long sinceID;
+    int counter = 0;
 
     /**
      * Recursive search for tweets based on this query and store the maxID for the search results
      *
      * @param query search based on this query
      */
-    public void getData(Query query) {
+    public void storeData(Query query) {
         QueryResult queryResult;
         queryDup = query;
         oldestTweetID = 0;
-
+        int j = 1;
         try {
             rateLimit = new RateLimitChecker().rateLimitCheck();
             LOGGER.info("Tweets search Start");
             File file = new File(TweetDataFilepath);
             FileWriter writer = new FileWriter(file, true);
-            int counter = 0;
             sinceID = 0;
             do {
                 queryResult = twitter.search(query);
                 List<Status> queryTweets = queryResult.getTweets();
-
+                sinceID = queryResult.getSinceId();
                 //the first page and the first time store maxID
                 if (counter == 0) {
                     maxId = queryResult.getMaxId();
-                    sinceID = queryResult.getSinceId();
                 }
-                int j = 1;
                 for (Status i : queryTweets) {
                     oldestTweetID = i.getId();
                     writer.append(String.valueOf(j)).append(i.toString());
@@ -72,10 +70,19 @@ public class TweetExtractor implements DataExtractor {
             also store the oldestTweetID and sinceID, else simply store the maxID as sinceID and oldestTweetID which is the scenario wherein the rate limit has not reached
             and the gap does not exist
             */
-            if (oldestTweetID - sinceID > 0 && rateLimit && query != null) {
-                idHandler.writeCurrentState(queryDup, maxId, oldestTweetID, sinceID);
-                extractRemaining(query);
+            if (oldestTweetID - sinceID > 0) {
+                if (rateLimit && query != null) {
+                    // There is a gap, rate limit was reached and there exists further objects. Store the current state of the query and extract the remaining
+                    idHandler.writeCurrentState(queryDup, maxId, oldestTweetID, sinceID);
+                    extractRemaining(query);
+
+                } else if (!rateLimit && query == null) {
+                    //There is a gap, but further tweets are not accessible (primary reason is that the tweets are older than 7 days). Consider the state of the query as
+                    // equivalent to that of the state of a completed query
+                    idHandler.writeCurrentState(queryDup, maxId, maxId, maxId);
+                }
             } else {
+                // There is no gap, store all the IDs as maxIDs (for easy operational reasons)
                 idHandler.writeCurrentState(queryDup, maxId, maxId, maxId);
             }
             writer.close();
@@ -88,7 +95,7 @@ public class TweetExtractor implements DataExtractor {
             } catch (InterruptedException ex) {
                 LOGGER.error(e.toString());
             }
-            getData(query);
+            storeData(query);
         }
         LOGGER.info("Tweets search End");
     }
@@ -105,6 +112,6 @@ public class TweetExtractor implements DataExtractor {
         rateLimit = false;
         LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
         TimeUnit.MINUTES.sleep(15);
-        getData(query);
+        storeData(query);
     }
 }

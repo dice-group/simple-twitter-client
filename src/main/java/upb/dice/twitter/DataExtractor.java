@@ -7,6 +7,5 @@ public interface DataExtractor {
      * A method which writes data objects to a file
      * @param query
      */
-    void getData(Query query);
-
+    void storeData(Query query);
 }
