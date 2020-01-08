@@ -10,8 +10,6 @@ import twitter4j.Query;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * An application which extracts tweets based on a specific keyword or location provided by the user.
@@ -68,9 +66,7 @@ public class TweetSearchApplication {
                             locationsQueue.put(new GeoQuery(new GeoLocation((Double.parseDouble(searchArgs[j])), Double.parseDouble(searchArgs[j + 1]))), Long.parseLong(searchArgs[j + 2]));
                             long periodSeconds = Long.parseLong(searchArgs[searchArgs.length - 1]);
                             checkPeriod[0] = periodSeconds * 60 * 60 * 1000;
-//                            checkPeriod[0] = 10;
                             j = j + 3;
-
                         }
                     }
                 }
@@ -124,23 +120,6 @@ public class TweetSearchApplication {
                                 LOGGER.error(e.getMessage());
                             }
                         }
-
-                        //sort the location details in the decreasing order of their gap which exists and give the location with higher gap as the priority to
-                        // query with in the next timer
-//                        LinkedHashMap<GeoQuery, Long> sortedLocID = new LinkedHashMap<>();
-//                        for (Entry<GeoQuery, Long> lc : locationsQueue.entrySet()) {
-//                            try {
-//                                List<Long> locIDList = idHandler.retrieveCurrentState(new LocationQuery(lc.getKey(), lc.getValue()).generateQuery());
-//                                Map<GeoQuery, Long> locID = new HashMap<>();
-//                                locID.put(lc.getKey(), locIDList.get(1) - locIDList.get(2));
-//                                locID.entrySet()
-//                                        .stream()
-//                                        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-//                                        .forEachOrdered(x -> sortedLocID.put(x.getKey(), x.getValue()));
-//                            } catch (IOException e) {
-//                                LOGGER.error(e.getMessage());
-//                            }
-//                        }
                         LinkedHashMap<Map<GeoQuery, Long>, Long> sortedLocID = new LinkedHashMap<>();
                         Map<Map<GeoQuery, Long>, Long> locID =  new HashMap<>();
                         for (Entry<GeoQuery, Long> lc : locationsQueue.entrySet()) {
