@@ -14,7 +14,7 @@ public class KeywordQuery extends QueryGenerator {
      * Constructor which sets the key
      * @param key for which the query should be generated
      */
-    KeywordQuery(String key){
+    public KeywordQuery(String key){
         this.key = key;
     }
     @Override
