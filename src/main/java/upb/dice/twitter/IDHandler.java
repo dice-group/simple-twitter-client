@@ -81,7 +81,8 @@ public class IDHandler {
                     }
                 } else if (query.getGeocode() != null) {
                     String[] locationString = query.getGeocode().split(",");
-                    if (line.contains((locationString[0] + "," + locationString[1]))) {
+                    if (line.contains((locationString[0] + "," + locationString[1])) &&
+                            line.indexOf(locationString[0])==0) {
                         String[] splitString = line.split(",");
                         //if the current oldestTweetID value is not null, replace with the new maxID and oldestTweetID value. Else return the previous value for both
                         if (splitString[4] != null) {
