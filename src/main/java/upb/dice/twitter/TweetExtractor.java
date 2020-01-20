@@ -18,16 +18,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class TweetExtractor implements DataExtractor {
 
-    private final static String directoryName = "Tweets_Search_Details";
-    private final static String TweetDataFilepath = directoryName + File.separator + "Tweet_object1.txt";
-    public long oldestTweetID;
+    private final static String DIRECTORY_NAME = "Tweets_Search_Details";
+    private final static  String FILE_NAME = "Tweet_object1.txt";
+    private final static String TWEET_DATA_FILEPATH = DIRECTORY_NAME + File.separator + FILE_NAME;
+    private long oldestTweetID;
     private Logger LOGGER = LoggerFactory.getLogger(TweetExtractor.class);
     private IDHandler idHandler = new IDHandler();
     private Twitter twitter = TwitterFactory.getSingleton();
-    private boolean remainingTweet;
     public boolean rateLimit;
     private long maxId;
-    Query queryDup;
     long sinceID;
     int counter = 0;
 
@@ -38,13 +37,13 @@ public class TweetExtractor implements DataExtractor {
      */
     public void storeData(Query query) {
         QueryResult queryResult;
-        queryDup = query;
+        Query queryDup = query;
         oldestTweetID = 0;
         int j = 1;
         try {
             rateLimit = new RateLimitChecker().rateLimitCheck();
             LOGGER.info("Tweets search Start");
-            File file = new File(TweetDataFilepath);
+            File file = new File(TWEET_DATA_FILEPATH);
             FileWriter writer = new FileWriter(file, true);
             sinceID = 0;
             do {
@@ -108,7 +107,7 @@ public class TweetExtractor implements DataExtractor {
     public void extractRemaining(Query query) throws InterruptedException {
         query.setUntil(String.valueOf(oldestTweetID));
         query.setSinceId(sinceID);
-        remainingTweet = true;
+        boolean remainingTweet = true;
         rateLimit = false;
         LOGGER.info("In extracting the remaining tweets. Current time is: " + new Date());
         TimeUnit.MINUTES.sleep(15);

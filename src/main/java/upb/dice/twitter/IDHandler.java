@@ -28,18 +28,18 @@ public class IDHandler {
      * @param sinceID       the lower bound to the search which is done
      * @throws IOException
      */
-    public void writeCurrentState(Query query, double maxID, double oldestTweetID, double sinceID) throws IOException {
+    public void writeCurrentState(Query query, Long maxID, Long oldestTweetID, Long sinceID) throws IOException {
         BufferedWriter out;
         if (query.getQuery() != null) {
             out = new BufferedWriter(new FileWriter(new File(keywordMaxIDFilepath), true));
             out.newLine();
-            out.append(query.getQuery()).append(",").append(String.format("%.0f", maxID));
+            out.append(query.getQuery()).append(",").append(Long.toString(maxID));
         } else {
             out = new BufferedWriter(new FileWriter(new File(locationMaxIDFilepath), true));
             out.newLine();
-            out.append(String.valueOf(query.getGeocode())).append(",").append(String.format("%.0f", maxID));
+            out.append(String.valueOf(query.getGeocode())).append(",").append(Long.toString(maxID));
         }
-        out.append(",").append(String.format("%.0f", oldestTweetID)).append(",").append(String.format("%.0f", sinceID));
+        out.append(",").append(Long.toString(oldestTweetID)).append(",").append(Long.toString(sinceID));
         out.close();
     }
 
@@ -53,8 +53,8 @@ public class IDHandler {
     public List<Long> retrieveCurrentState(Query query) throws IOException {
         File file;
         List<Long> list = new ArrayList<>();
-        list.add((long) Double.POSITIVE_INFINITY);//maxID
-        list.add((long) Double.POSITIVE_INFINITY);//oldestTweetID
+        list.add(-1L);//maxID
+        list.add(-1L);//oldestTweetID
         list.add(-1L);//sinceID
         if (query.getQuery() != null) {
             file = new File(keywordMaxIDFilepath);

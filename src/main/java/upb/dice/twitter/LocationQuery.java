@@ -1,6 +1,5 @@
 package upb.dice.twitter;
 
-import twitter4j.GeoQuery;
 import twitter4j.Query;
 import java.io.IOException;
 
@@ -9,21 +8,19 @@ import java.io.IOException;
  * by considering the current state of the query
  */
 public class LocationQuery extends QueryGenerator {
-    private GeoQuery geoQuery;
-    private double radius;
+    private GeoPosition geoPosition;
 
     /**
-     * Constructor which sets the geeoquer and the radiius
-     * @param geoQuery for which the query should be generated
-     * @param radius around the given location
+     * Constructor taking the position for which the query has to be generated
+     * @param geoPosition for which the query has to be generated
      */
-    public LocationQuery(GeoQuery geoQuery, double radius) {
-        this.geoQuery = geoQuery;
-        this.radius= radius;
+    public LocationQuery(GeoPosition geoPosition) {
+        this.geoPosition = geoPosition;
     }
+
     @Override
     public Query generateQuery() throws IOException {
-        query.setGeoCode(geoQuery.getLocation(), radius, Query.KILOMETERS);
+        query.setGeoCode(geoPosition.getLocation(), geoPosition.getRadius(), Query.KILOMETERS);
         return getModifiedQuery(query);
     }
 }
